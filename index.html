@@ -30,17 +30,18 @@
 
   <script type="text/javascript">
     function showEntry(key, value) {
-      let parsedValue;
-      try {
-        parsedValue = JSON.parse(value);
-      } catch (err) {
-        console.error('Failed to parse JSON value!', value);
-        return;
-      }
-
       const entry = $('<div class="element"></div>');
       const viewer = $('<pre class="element-value" id="json-viewer"></pre>');
-      viewer.jsonViewer(parsedValue);
+
+      let parsedValue = value;
+      try {
+        parsedValue = JSON.parse(value);
+        viewer.jsonViewer(parsedValue);
+      } catch (err) {
+        console.warn('Failed to parse field value! Using original value.', value);
+        viewer.append(value);
+      }
+
       entry.append(`<pre class="element-key">${key}</pre>`, viewer);
       $('#output').append(entry, {withQuotes: true});
     }
