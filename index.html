@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/x-icon" href="https://vt-lp.github.io/cw-reader/favicon.ico"/>
+  <link href="jquery.json-viewer.css" rel="stylesheet">
+
+  <style>
+    .head {
+      display: flex;
+      justify-content: space-evenly;
+    }
+    .element {
+      display: flex;
+      justify-content: flex-start;
+    }
+    .element-key {
+      flex: 0 0 30em;
+      white-space: normal;
+    }
+    .element-value {
+      flex: 0;
+    }
+  </style>
+
+  <script src="https://code.jquery.com/jquery.min.js"></script>
+  <script src="jquery.json-viewer.js"></script>
+
+
+  <script type="text/javascript">
+    function showEntry(key, value) {
+      let parsedValue;
+      try {
+        parsedValue = JSON.parse(value);
+      } catch (err) {
+        console.error('Failed to parse JSON value!', value);
+        return;
+      }
+
+      const entry = $('<div class="element"></div>');
+      const viewer = $('<pre class="element-value" id="json-viewer"></pre>');
+      viewer.jsonViewer(parsedValue);
+      entry.append(`<pre class="element-key">${key}</pre>`, viewer);
+      $('#output').append(entry, {withQuotes: true});
+    }
+
+    function showResults(response) {
+      let body;
+      try {
+        body = JSON.parse(response);
+      } catch (err) {
+        console.error('Failed to parse JSON response!');
+        return;
+      }
+
+      $('#output').empty();
+
+      Object.entries(body).forEach(entry => {
+        const [key, value] = entry;
+        showEntry(key, value);
+      });
+    }
+
+    function readFromWarehouse() {
+      const accountNumber = document.querySelector('input[id="account-number"]').value;
+      const namespace = document.querySelector('input[id="namespace"]').value;
+      const convId = document.querySelector('input[id="conv-id"]').value;
+      const apiKey = document.querySelector('input[id="apik"]').value;
+
+      if (!accountNumber || !namespace || !convId || !apiKey) {
+        alert('All fields are mandatory!');
+        return;
+      }
+
+      const headers = new Headers();
+      headers.append("maven-api-key", apiKey);
+      headers.append("Content-Type", "application/json");
+      
+      const requestOptions = {
+        method: 'GET',
+        headers,
+      };
+
+      fetch(`https://z1.context.liveperson.net/v1/account/${accountNumber}/${namespace}/${convId}/properties`, requestOptions)
+        .then(response => response.text())
+        .then(result => showResults(result))
+        .catch(error => console.error('Failed to fetch!', error));
+    }
+  </script>
+</head>
+
+<body>
+  <div class="head">
+    <h3>Context Warehouse Reader</h3>
+  </div>
+  <div class="head">
+    <div>
+      <label for="account-number">Account Number:</label>
+      <input type="text" id="account-number">
+    </div>
+    <div>
+      <label for="namespace">Namespace:</label>
+      <input type="text" id="namespace">
+    </div>
+    <div>
+      <label for="conv-id">Conversation ID:</label>
+      <input type="text" id="conv-id">
+    </div>
+    <div>
+      <label for="apik">API Key:</label>
+      <input type="password" id="apik">
+    </div>
+    <div>
+      <input type="button" value="Read" id="read" onclick="readFromWarehouse()">
+    </div>
+  </div>
+  <div id="output">
+  </div>
+</body>
+
+</html>
